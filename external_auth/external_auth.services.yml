@@ -1,0 +1,3 @@
+services:
+  external_auth.users:
+    class: Drupal\external_auth\UsersService

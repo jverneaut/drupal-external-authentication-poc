@@ -1,0 +1,29 @@
+<?php
+
+use Drupal\Core\Form\FormStateInterface;
+
+function external_auth_form_user_login_form_alter(&$form, FormStateInterface $form_state) {
+  if (@in_array('::validateFinal', $form['#validate'])) {
+    $key = array_search('::validateFinal', $form['#validate']);
+    $form['#validate'][$key] = 'external_auth_authenticate';
+    $form['#validate'][] = '::validateFinal';
+  }
+}
+
+function external_auth_authenticate(array &$form, FormStateInterface $form_state) {
+  if (!$form_state->get('uid')) {
+    $name = $form_state->getValue('name');
+    $password = trim($form_state->getValue('pass'));
+
+    $users_service = \Drupal::service('external_auth.users');
+    $user_external_id = $users_service->getExternalIdByMail($name);
+
+    if ($user_external_id) {
+      $account = $users_service->loginOrRegisterUser($user_external_id, $password);
+
+      if ($account) {
+        $form_state->set('uid', $account->id());
+      }
+    }
+  }
+}
